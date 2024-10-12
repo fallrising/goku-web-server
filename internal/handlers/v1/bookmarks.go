@@ -90,10 +90,6 @@ func validateURLInfo(info models.URLInfo) error {
 		return errors.New("invalid URL format")
 	}
 
-	if info.Title == "" {
-		return errors.New("title is required")
-	}
-
 	return nil
 }
 
