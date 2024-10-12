@@ -29,6 +29,11 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) setupRoutes() {
-	uploadHandler := handlers.NewUploadHandler(s.db)
-	s.router.POST("/upload", uploadHandler.HandleUpload)
+	bookmarkHandler := handlers.NewBookmarkHandler(s.db)
+
+	s.router.POST("/upload", bookmarkHandler.HandleUpload)
+	s.router.GET("/bookmarks", bookmarkHandler.HandleGetAll)
+	s.router.GET("/bookmark", bookmarkHandler.HandleGetByURL)
+	s.router.PUT("/bookmark", bookmarkHandler.HandleUpdate)
+	s.router.DELETE("/bookmark/:id", bookmarkHandler.HandleDelete)
 }
