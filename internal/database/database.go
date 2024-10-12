@@ -20,7 +20,32 @@ func NewDatabase(dbPath string) (*Database, error) {
 		return nil, fmt.Errorf("error opening database: %w", err)
 	}
 
-	return &Database{db: db}, nil
+	database := &Database{db: db}
+	if err := database.InitTable(); err != nil {
+		return nil, fmt.Errorf("error initializing table: %w", err)
+	}
+
+	return database, nil
+}
+
+func (d *Database) InitTable() error {
+	query := `
+    CREATE TABLE IF NOT EXISTS bookmarks (
+        id INTEGER PRIMARY KEY,
+        url TEXT NOT NULL,
+        title TEXT,
+        description TEXT,
+        tags TEXT,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
+    )`
+
+	_, err := d.db.Exec(query)
+	if err != nil {
+		return fmt.Errorf("error creating bookmarks table: %w", err)
+	}
+
+	return nil
 }
 
 func (d *Database) Close() error {
