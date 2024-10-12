@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/fallrising/goku-api/internal/database"
@@ -26,8 +28,73 @@ func (h *BookmarkHandler) HandleUpload(c *gin.Context) {
 		return
 	}
 
-	// Rest of the HandleUpload function remains the same
-	// ...
+	if len(urlInfos) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No URL information provided"})
+		return
+	}
+
+	var processedURLs []string
+	var parsingErrors []string
+
+	for _, info := range urlInfos {
+		if err := validateURLInfo(info); err != nil {
+			parsingErrors = append(parsingErrors, err.Error())
+			continue
+		}
+
+		// Check if bookmark already exists
+		existingBookmark, err := h.db.GetBookmarkByURL(info.URL)
+		if err != nil {
+			parsingErrors = append(parsingErrors, "Error checking existing bookmark: "+err.Error())
+			continue
+		}
+
+		if existingBookmark != nil {
+			parsingErrors = append(parsingErrors, "Bookmark already exists: "+info.URL)
+			continue
+		}
+
+		// Save new bookmark
+		if err := h.db.SaveBookmark(info); err != nil {
+			parsingErrors = append(parsingErrors, "Failed to save bookmark: "+err.Error())
+			continue
+		}
+
+		processedURLs = append(processedURLs, info.URL)
+	}
+
+	response := gin.H{
+		"processed_urls": processedURLs,
+	}
+
+	if len(parsingErrors) > 0 {
+		response["parsingErrors"] = parsingErrors
+	}
+
+	statusCode := http.StatusOK
+	if len(processedURLs) == 0 && len(parsingErrors) > 0 {
+		statusCode = http.StatusBadRequest
+	} else if len(parsingErrors) > 0 {
+		statusCode = http.StatusPartialContent
+	}
+
+	c.JSON(statusCode, response)
+}
+
+func validateURLInfo(info models.URLInfo) error {
+	if info.URL == "" {
+		return errors.New("URL is required")
+	}
+
+	if _, err := url.ParseRequestURI(info.URL); err != nil {
+		return errors.New("invalid URL format")
+	}
+
+	if info.Title == "" {
+		return errors.New("title is required")
+	}
+
+	return nil
 }
 
 // HandleGetAll retrieves all bookmarks
