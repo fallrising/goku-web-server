@@ -12,16 +12,18 @@ type Server struct {
 	config *config.Config
 }
 
-func NewServer(cfg *config.Config, v1Router *gin.RouterGroup) *Server {
+func NewServer(cfg *config.Config) *Server {
 	router := gin.Default()
-	router.Any("/api/v1/*path", func(c *gin.Context) {
-		v1Router.HandleContext(c)
-	})
 
 	return &Server{
 		router: router,
 		config: cfg,
 	}
+}
+
+func (s *Server) AttachRouter(basePath string, routerFunc func(*gin.RouterGroup)) {
+	group := s.router.Group(basePath)
+	routerFunc(group)
 }
 
 func (s *Server) Run() error {

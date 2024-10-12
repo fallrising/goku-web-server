@@ -21,9 +21,10 @@ func main() {
 	}
 	defer db.Close()
 
-	v1Router := v1.NewRouter(db)
+	srv := server.NewServer(cfg)
 
-	srv := server.NewServer(cfg, v1Router)
+	srv.AttachRouter("/api/v1", v1.SetupRoutes(db))
+
 	if err := srv.Run(); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}

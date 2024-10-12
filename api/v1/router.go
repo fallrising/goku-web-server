@@ -6,17 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(db *database.Database) *gin.RouterGroup {
-	router := gin.New()
-	v1 := router.Group("/api/v1")
+func SetupRoutes(db *database.Database) func(*gin.RouterGroup) {
+	return func(router *gin.RouterGroup) {
+		bookmarkHandler := handlers.NewBookmarkHandler(db)
 
-	bookmarkHandler := handlers.NewBookmarkHandler(db)
-
-	v1.POST("/upload", bookmarkHandler.HandleUpload)
-	v1.GET("/bookmarks", bookmarkHandler.HandleGetAll)
-	v1.GET("/bookmark", bookmarkHandler.HandleGetByURL)
-	v1.PUT("/bookmark", bookmarkHandler.HandleUpdate)
-	v1.DELETE("/bookmark/:id", bookmarkHandler.HandleDelete)
-
-	return v1
+		router.POST("/upload", bookmarkHandler.HandleUpload)
+		router.GET("/bookmarks", bookmarkHandler.HandleGetAll)
+		router.GET("/bookmark", bookmarkHandler.HandleGetByURL)
+		router.PUT("/bookmark", bookmarkHandler.HandleUpdate)
+		router.DELETE("/bookmark/:id", bookmarkHandler.HandleDelete)
+	}
 }
